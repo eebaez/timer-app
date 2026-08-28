@@ -90,11 +90,15 @@ README doesn't duplicate either of them:
   matches what's documented.
 - **[docs/artifacts/](docs/artifacts/)** — the high-fidelity designs
   and generated journey-map views referenced by both.
+- **[CHANGELOG.md](CHANGELOG.md)** — what changed, release by
+  release.
 
 ## Status
 
 v1 shipped: all 6 build phases complete, 9/9 Blueprint Behavioral
-Contracts conform, packaged as a signed `.app`. A v2/v3 iPhone
+Contracts conform, packaged as a signed `.app` — grab it from
+[Releases](https://github.com/eebaez/timer-app/releases/latest)
+rather than building from source, unless you want to. A v2/v3 iPhone
 companion (sharing `TimerCore`) is planned but not started — see the
 Blueprint's Deferred Items.
 

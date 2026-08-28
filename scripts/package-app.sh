@@ -10,7 +10,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="Interview Timer"
 BUNDLE_ID="com.yamherlabs.interviewtimer"
-VERSION="1.0"
+VERSION="1.0.0"
 BUILD_NUMBER="1"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
