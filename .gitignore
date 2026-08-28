@@ -1,0 +1,16 @@
+# Swift Package Manager build artifacts
+.build/
+.swiftpm/
+
+# Packaged app output — regenerate with scripts/package-app.sh
+dist/
+
+# Icon build intermediate — scripts/build-icns.sh deletes this on a
+# successful run; ignored defensively in case a run gets interrupted.
+scripts/icon/AppIcon.iconset/
+
+# Editor
+.vscode/
+
+# macOS
+.DS_Store

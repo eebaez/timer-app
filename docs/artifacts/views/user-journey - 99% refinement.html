@@ -1,0 +1,362 @@
+<title>Interview Timer Journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #faf9f6;
+    --paper-raised: #ffffff;
+    --ink: #1f2933;
+    --ink-soft: #5b6774;
+    --line: #c7cdd3;
+    --accent: #b8500f;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14181d;
+      --paper-raised: #1b2027;
+      --ink: #e7eaee;
+      --ink-soft: #96a2ad;
+      --line: #333b44;
+      --accent: #e2853f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #14181d;
+    --paper-raised: #1b2027;
+    --ink: #e7eaee;
+    --ink-soft: #96a2ad;
+    --line: #333b44;
+    --accent: #e2853f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding: 48px 32px 64px;
+  }
+
+  .page {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .prose {
+    max-width: 62ch;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: clamp(26px, 3.4vw, 34px);
+    line-height: 1.15;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  .prose p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .diagram-frame {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper-raised);
+    padding: 18px 18px 14px;
+    overflow-x: auto;
+  }
+
+  svg.journey {
+    display: block;
+    width: 100%;
+    min-width: 980px;
+    height: auto;
+    color: var(--ink);
+  }
+
+  figcaption {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    max-width: 62ch;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper-raised);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  .legend-item svg { flex: none; }
+
+  .legend-item span { color: var(--ink); }
+
+  .stage-note {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+
+  .stage-note b { color: var(--ink); font-weight: 600; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .page { animation: rise 0.4s ease-out; }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="page">
+  <div class="prose">
+    <div class="eyebrow">Blueprint View — User Journey Map (99% Refinement)</div>
+    <h1>How a candidate moves through a practice session</h1>
+    <p>Regenerated from the 99% Refinement Blueprint after a Design
+    Conformance Review against the high-fidelity mockups. Durations are now
+    the finalized 45-minute spec (Core Entities and High-Level Design both
+    changed), and the skip control reads "Skip block" rather than naming
+    Data Flow. This remains a projection of
+    <code>application-blueprint.md</code>, not a separate source of truth.</p>
+  </div>
+
+  <figure>
+    <div class="diagram-frame">
+      <svg class="journey" viewBox="0 0 1550 500" role="img"
+        aria-label="The candidate starts a session, moves through six timed blocks — Requirements, Core Entities, API/System Interface, Data Flow, High-Level Design, and Deep Dives — then completes the session, which is saved to history. Data Flow can be skipped in the moment, arcing past it to High-Level Design. Cancel is available from any block and opens a confirm-or-decline decision: declining resumes the session unchanged, confirming ends it as Cancelled. Separately, if the app is closed or refreshed mid-session, the interruption is detected on relaunch and auto-saved as Cancelled with a one-time notice on Home — without the candidate explicitly cancelling. A second small flow shows browsing from Home into Session History and a past Session Detail.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L8,4 L0,8 Z" fill="currentColor" />
+          </marker>
+          <marker id="arrowAccent" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L8,4 L0,8 Z" fill="var(--accent)" />
+          </marker>
+        </defs>
+
+        <!-- main sequence connectors -->
+        <g stroke="currentColor" stroke-width="1.5" fill="none">
+          <line x1="155" y1="150" x2="175" y2="150" marker-end="url(#arrow)" />
+          <line x1="305" y1="150" x2="325" y2="150" marker-end="url(#arrow)" />
+          <line x1="455" y1="150" x2="475" y2="150" marker-end="url(#arrow)" />
+          <line x1="605" y1="150" x2="625" y2="150" marker-end="url(#arrow)" />
+          <line x1="755" y1="150" x2="775" y2="150" marker-end="url(#arrow)" />
+          <line x1="905" y1="150" x2="925" y2="150" marker-end="url(#arrow)" />
+          <line x1="1055" y1="150" x2="1075" y2="150" marker-end="url(#arrow)" />
+          <line x1="1205" y1="150" x2="1225" y2="150" marker-end="url(#arrow)" />
+          <line x1="1355" y1="150" x2="1375" y2="150" marker-end="url(#arrow)" />
+        </g>
+
+        <!-- skip arc over Data Flow -->
+        <path d="M690,118 Q840,40 990,118" fill="none" stroke="currentColor"
+          stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)" />
+        <text x="840" y="53" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="10.5" fill="var(--ink-soft)">Skip block</text>
+
+        <!-- main row nodes -->
+        <g font-family="IBM Plex Mono, monospace">
+          <rect x="25" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="90" y="154" text-anchor="middle" font-weight="600" font-size="11.5" fill="var(--ink)">Home</text>
+
+          <rect x="175" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="240" y="144" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">Start</text>
+          <text x="240" y="160" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">Session</text>
+
+          <rect x="325" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="390" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Requirements</text>
+          <text x="390" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">5m</text>
+
+          <rect x="475" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="540" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Core Entities</text>
+          <text x="540" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">5m</text>
+
+          <rect x="625" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="690" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">API / Interface</text>
+          <text x="690" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">5m</text>
+
+          <rect x="775" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="840" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Data Flow</text>
+          <text x="840" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">5m</text>
+
+          <rect x="925" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="990" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">High-Level Design</text>
+          <text x="990" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">15m</text>
+
+          <rect x="1075" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="1140" y="146" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Deep Dives</text>
+          <text x="1140" y="163" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)" font-variant-numeric="tabular-nums">10m</text>
+
+          <rect x="1225" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="1290" y="144" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">Session</text>
+          <text x="1290" y="160" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">Complete</text>
+
+          <rect x="1375" y="118" width="130" height="64" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="1440" y="144" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">Saved to</text>
+          <text x="1440" y="160" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ink)">History</text>
+        </g>
+
+        <!-- cancel bracket under the block sequence -->
+        <path d="M325,182 L325,196 L1205,196 L1205,182" fill="none"
+          stroke="var(--ink-soft)" stroke-width="1" />
+        <text x="765" y="212" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="10" fill="var(--ink-soft)">cancel available from any block — no pause/resume</text>
+
+        <line x1="765" y1="196" x2="765" y2="207" stroke="var(--accent)"
+          stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowAccent)" />
+
+        <!-- decision diamond -->
+        <polygon points="765,208 856,250 765,292 674,250" fill="var(--paper-raised)"
+          stroke="var(--accent)" stroke-width="1.5" />
+        <text x="765" y="246" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-weight="600" font-size="10" fill="var(--ink)">Cancel this</text>
+        <text x="765" y="260" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-weight="600" font-size="10" fill="var(--ink)">session?</text>
+
+        <!-- declined branch: back into normal flow -->
+        <path d="M694,232 C 630,215 600,208 601,197" fill="none" stroke="currentColor"
+          stroke-width="1.5" marker-end="url(#arrow)" />
+        <text x="560" y="228" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="9.5" fill="var(--ink-soft)">Keep going —</text>
+        <text x="560" y="240" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="9.5" fill="var(--ink-soft)">resumes, no change</text>
+
+        <!-- confirmed branch: down to Cancelled -->
+        <line x1="765" y1="292" x2="765" y2="311" stroke="var(--accent)"
+          stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowAccent)" />
+        <text x="835" y="300" font-family="IBM Plex Mono, monospace" font-size="9.5"
+          fill="var(--ink-soft)">Cancel session</text>
+
+        <rect x="690" y="312" width="150" height="56" rx="6" fill="var(--paper-raised)"
+          stroke="var(--accent)" stroke-width="1.5" />
+        <text x="765" y="345" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-weight="600" font-size="11.5" fill="var(--ink)">Cancelled</text>
+
+        <line x1="840" y1="340" x2="880" y2="340" stroke="var(--accent)"
+          stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowAccent)" />
+        <text x="888" y="344" font-family="IBM Plex Sans, sans-serif" font-size="10.5"
+          fill="var(--ink-soft)">recorded in Session History, marked Cancelled</text>
+
+        <!-- secondary journey: browse history -->
+        <path d="M90,182 L90,450 L155,450" fill="none" stroke="currentColor"
+          stroke-width="1.5" marker-end="url(#arrow)" />
+        <text x="100" y="330" font-family="IBM Plex Mono, monospace" font-size="10"
+          fill="var(--ink-soft)">browse history</text>
+
+        <rect x="155" y="422" width="160" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+        <text x="235" y="454" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="11" fill="var(--ink)">Session History</text>
+
+        <line x1="315" y1="450" x2="375" y2="450" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)" />
+        <text x="345" y="440" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-soft)">select</text>
+
+        <rect x="375" y="422" width="160" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+        <text x="455" y="454" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="11" fill="var(--ink)">Session Detail</text>
+
+        <!-- interruption journey (system-triggered) -->
+        <text x="620" y="400" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="9.5" fill="var(--ink-soft)">from any block, any time —</text>
+        <text x="620" y="412" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+          font-size="9.5" fill="var(--ink-soft)">no candidate action</text>
+
+        <rect x="545" y="422" width="150" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+        <text x="620" y="446" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">App closed</text>
+        <text x="620" y="461" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">or refreshed</text>
+
+        <line x1="695" y1="450" x2="725" y2="450" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)" />
+
+        <rect x="725" y="422" width="150" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+        <text x="800" y="446" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">Reopened</text>
+        <text x="800" y="461" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">at Home</text>
+
+        <line x1="875" y1="450" x2="905" y2="450" stroke="var(--accent)" stroke-width="1.5"
+          stroke-dasharray="1.5 3" marker-end="url(#arrowAccent)" />
+
+        <rect x="905" y="422" width="160" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--accent)" stroke-width="1.5" />
+        <text x="985" y="446" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">Auto-saved as</text>
+        <text x="985" y="461" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="10.5" fill="var(--ink)">Cancelled</text>
+
+        <text x="1075" y="446" font-family="IBM Plex Sans, sans-serif" font-size="10"
+          fill="var(--ink-soft)">+ one-time notice</text>
+        <text x="1075" y="459" font-family="IBM Plex Sans, sans-serif" font-size="10"
+          fill="var(--ink-soft)">shown on Home</text>
+      </svg>
+    </div>
+    <figcaption>The primary path runs left to right through all six blocks.
+    Data Flow can be skipped in the moment. Cancel opens a confirm/decline
+    decision — declining resumes normally, confirming ends the session as
+    Cancelled. An unintentional interruption (app closed or refreshed)
+    reaches the same Cancelled outcome automatically on relaunch, without
+    the candidate choosing to cancel. Separately, from Home a candidate can
+    browse Session History and open a past session's detail.</figcaption>
+  </figure>
+
+  <div class="legend">
+    <div class="legend-item">
+      <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)" /></svg>
+      <span>Primary or alternate journey step</span>
+    </div>
+    <div class="legend-item">
+      <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)" /></svg>
+      <span>Optional — Data Flow can be skipped</span>
+    </div>
+    <div class="legend-item">
+      <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowAccent)" /></svg>
+      <span>Candidate confirms Cancel</span>
+    </div>
+    <div class="legend-item">
+      <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="1.5 3" marker-end="url(#arrowAccent)" /></svg>
+      <span>System-triggered (interruption)</span>
+    </div>
+  </div>
+
+  <div class="stage-note">
+    Resolution stage: <b>99% — Refinement</b> (rev. 11, post Design Conformance Review) · Source: <b>application-blueprint.md</b> · This view is a projection of the Blueprint — regenerate it rather than editing it directly if the journey changes again.
+  </div>
+</div>

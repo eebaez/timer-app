@@ -1,0 +1,79 @@
+<svg viewBox="0 0 1450 330" xmlns="http://www.w3.org/2000/svg" role="img"
+  aria-label="A candidate starts a practice session from Home, moves through six timed blocks — Requirements, Core Entities, API/System Interface, Data Flow, High-Level Design, and Deep Dives, 45 minutes total — then reaches Session Complete. Data Flow can be skipped, cancelling at any point still saves the session, and every session is recorded in Session History.">
+  <rect x="0" y="0" width="1450" height="330" fill="#faf9f6" />
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#1f2933" />
+    </marker>
+    <marker id="arrowAccent" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#b8500f" />
+    </marker>
+  </defs>
+
+  <text x="40" y="40" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12"
+    letter-spacing="0.08em" fill="#5b6774">HOW A PRACTICE SESSION FLOWS</text>
+
+  <!-- main sequence connectors -->
+  <g stroke="#1f2933" stroke-width="1.5" fill="none">
+    <line x1="170" y1="142" x2="202" y2="142" marker-end="url(#arrow)" />
+    <line x1="342" y1="142" x2="374" y2="142" marker-end="url(#arrow)" />
+    <line x1="514" y1="142" x2="546" y2="142" marker-end="url(#arrow)" />
+    <line x1="686" y1="142" x2="718" y2="142" marker-end="url(#arrow)" />
+    <line x1="858" y1="142" x2="890" y2="142" marker-end="url(#arrow)" />
+    <line x1="1030" y1="142" x2="1062" y2="142" marker-end="url(#arrow)" />
+    <line x1="1202" y1="142" x2="1234" y2="142" marker-end="url(#arrow)" />
+  </g>
+
+  <!-- skip arc over Data Flow -->
+  <path d="M718,110 Q803,58 890,110" fill="none" stroke="#5b6774" stroke-width="1.5"
+    stroke-dasharray="4 4" marker-end="url(#arrow)" />
+  <text x="803" y="52" text-anchor="middle" font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+    font-size="11" fill="#5b6774">optional — can skip</text>
+
+  <!-- nodes -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, monospace">
+    <rect x="30" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="100" y="148" text-anchor="middle" font-weight="600" font-size="13" fill="#1f2933">Home</text>
+
+    <rect x="202" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="272" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">Requirements</text>
+    <text x="272" y="155" text-anchor="middle" font-size="11" fill="#5b6774">5 min</text>
+
+    <rect x="374" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="444" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">Core Entities</text>
+    <text x="444" y="155" text-anchor="middle" font-size="11" fill="#5b6774">5 min</text>
+
+    <rect x="546" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="616" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">API / Interface</text>
+    <text x="616" y="155" text-anchor="middle" font-size="11" fill="#5b6774">5 min</text>
+
+    <rect x="718" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="788" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">Data Flow</text>
+    <text x="788" y="155" text-anchor="middle" font-size="11" fill="#5b6774">5 min</text>
+
+    <rect x="890" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="960" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">High-Level Design</text>
+    <text x="960" y="155" text-anchor="middle" font-size="11" fill="#5b6774">15 min</text>
+
+    <rect x="1062" y="110" width="140" height="64" rx="8" fill="#ffffff" stroke="#c7cdd3" stroke-width="1.5" />
+    <text x="1132" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#1f2933">Deep Dives</text>
+    <text x="1132" y="155" text-anchor="middle" font-size="11" fill="#5b6774">10 min</text>
+
+    <rect x="1234" y="110" width="150" height="64" rx="8" fill="#1f2933" stroke="#1f2933" stroke-width="1.5" />
+    <text x="1309" y="138" text-anchor="middle" font-weight="600" font-size="12" fill="#faf9f6">Session</text>
+    <text x="1309" y="155" text-anchor="middle" font-weight="600" font-size="12" fill="#faf9f6">Complete</text>
+  </g>
+
+  <!-- footer callouts -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12.5" fill="#5b6774">
+    <circle cx="44" cy="238" r="3" fill="#b8500f" />
+    <text x="58" y="242">45 minutes total — but blocks are guidance, not gates; move on whenever you're ready</text>
+
+    <circle cx="44" cy="266" r="3" fill="#b8500f" />
+    <text x="58" y="270">Cancel at any point — still saved to History, never silently lost</text>
+
+    <circle cx="44" cy="294" r="3" fill="#b8500f" />
+    <text x="58" y="298">Every session, completed or cancelled, is recorded for you to review pacing over time</text>
+  </g>
+</svg>

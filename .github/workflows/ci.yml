@@ -1,0 +1,22 @@
+name: CI
+
+# Builds and runs TimerCoreTests on every push/PR against main. No
+# external SPM dependencies to cache, and the build is a couple of
+# seconds — nothing more elaborate needed for a project this size.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Swift toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
