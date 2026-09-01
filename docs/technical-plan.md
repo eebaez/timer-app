@@ -29,7 +29,7 @@ Blueprint section rather than restating it.
   not a v1 blocker.
 - **Product name:** `Interview Timer` — already the in-app title per
   Blueprint §10; now also the shipping app/bundle name.
-- **Bundle identifier:** `com.yamherlabs.interviewtimer`.
+- **Bundle identifier:** `com.eebaez.interviewtimer`.
 
 ------------------------------------------------------------------------
 
@@ -213,7 +213,7 @@ each row should be independently verifiable with VoiceOver on.
 Resolved: minimum OS version (macOS 26 / iOS 26), distribution (direct
 local build-and-run, no App Store for v1), product name
 (`Interview Timer`), and bundle identifier
-(`com.yamherlabs.interviewtimer`) — see §1.
+(`com.eebaez.interviewtimer`) — see §1.
 
 Nothing left open that blocks Phase 0. The only remaining question is
 forward-looking, not urgent:
