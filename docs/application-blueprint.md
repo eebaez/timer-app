@@ -1,8 +1,8 @@
 # Application Blueprint: System Design Interview Timer
 
 **Resolution Stage:** 99% — Refinement\
-**Last updated:** 2026-08-27 (rev. 13)\
-**Status:** Draft for review
+**Last updated:** 2026-09-04 (rev. 14 — Clear Session History folded in)\
+**Status:** Live — the authoritative source of truth for behavior, kept current as features land
 
 ------------------------------------------------------------------------
 
@@ -29,6 +29,7 @@ interview clock.
 - Cancel Session
 - View Session History
 - Review a Past Session's Detail
+- Clear Session History
 
 ------------------------------------------------------------------------
 
@@ -89,6 +90,18 @@ Session In Progress → app closed / refreshed → reopened at Home
 
 ``` text
 Session History → Select Session → Session Detail
+```
+
+**Alternate — clear history:**
+
+``` text
+Session History → Clear History (menu) → Older than 30 days | Older than 90 days | All Time
+  → Confirm → Session History (updated list, or empty state)
+```
+
+``` text
+Session History → Clear History → choose scope → Keep History (or Escape)
+  → Session History, unchanged
 ```
 
 ------------------------------------------------------------------------
@@ -173,6 +186,42 @@ the block was still Upcoming)
   non-destructive choice, so a mis-tap can't discard a real attempt.
 - The Skip control is only ever shown while Data Flow is the active
   block; it never appears for any other block.
+- **Clear History** acts only on saved History records. It never
+  touches an in-progress session or the abandoned-session marker used
+  for interruption detection — those are a separate store, untouched
+  by a clear.
+- "Clear older than X days" is a retention/prune model: it removes
+  sessions *older* than X days and keeps recent ones — not a wipe of
+  the last X days. The trigger for the feature is accumulation, not
+  privacy; a candidate pruning old throwaway sessions wants to keep
+  recent history for pacing trends.
+- The `Clear History` control is hidden when History is empty — no
+  dead-end control for nothing to clear.
+- A day-range scope that currently matches zero sessions is omitted
+  from the Clear History menu rather than shown disabled — a candidate
+  is never offered a scope that would be a confirmed no-op. `All Time`
+  is always present whenever the control is shown.
+- Each scope in the menu carries the count of sessions it would
+  remove, so the size of the action is visible before the confirmation
+  opens.
+- The Clear History confirmation always names the exact number of
+  sessions the chosen scope will remove and states plainly that the
+  action can't be undone. Its default-focused choice is the
+  non-destructive one (`Keep History`) and its destructive button is
+  visually distinct — the same defensive pattern as the Cancel
+  confirmation. `All Time` uses this same single-confirm pattern as the
+  day-range scopes, with no extra step (e.g. typing "DELETE") — the
+  named count plus "can't be undone" wording is the safeguard.
+- Rapid repeated activation of the destructive confirm button
+  registers once — same debounce rule as Next, Skip, and Cancel.
+- If the one-time interruption notice is still showing and a clear
+  action removes its linked session, the notice keeps its dismissible
+  text but drops its `View` link rather than pointing at a session
+  that no longer exists.
+- Day-range thresholds are fixed presets (30 / 90 days), not a
+  free-typed number — consistent with the app's "no candidate-entered
+  form data" posture. This is settled: there is no plan to make the
+  thresholds adjustable.
 
 ------------------------------------------------------------------------
 
@@ -296,6 +345,59 @@ Expected behavior:
   Reached) and time spent where applicable.
 ```
 
+``` text
+Action:
+Open Clear History Menu
+
+Expected behavior:
+- Available only when Session History has at least one saved session.
+- List up to three scopes — "Older than 30 days", "Older than 90
+  days", "All Time" — omitting any day-range scope that currently
+  matches zero sessions. "All Time" is always present.
+- Show, against each listed scope, the number of sessions that scope
+  would remove (recomputed live, same rule as the confirmation count).
+- A divider separates the day-range scopes from "All Time". When every
+  day-range scope is omitted (all sessions fall inside 30 days), the
+  menu is just "All Time" with no divider. When one day-range scope
+  remains, the divider still sits between it and "All Time".
+- Does not mutate any state; purely opens the menu.
+```
+
+``` text
+Action:
+Confirm Clear History
+
+Expected behavior:
+- Permanently delete every saved session matching the chosen scope:
+  all sessions (All Time), or every session whose startedAt is older
+  than (now − N days) for the chosen N. A session exactly on the
+  boundary is kept.
+- Sessions inside the retained window (or all sessions, for a
+  day-range scope that matches none) are left untouched.
+- Any session currently In Progress, and the abandoned-session marker,
+  are unaffected regardless of scope.
+- If the interruption notice's linked session was just removed, drop
+  its View link (the notice itself stays if still otherwise eligible).
+- Return to the Session History list — showing the empty state if that
+  was the last session removed.
+- Emit HistoryCleared(scope, sessionsRemoved).
+- If the underlying delete fails (e.g. disk I/O error), History is
+  left exactly as it was before the attempt — never partially
+  cleared — and a small retriable inline notice is shown, the same
+  pattern as a failed SessionSaved: "Couldn't clear history." with
+  Retry.
+- A rapid repeat tap within the debounce window has no additional
+  effect.
+```
+
+``` text
+Action:
+Decline Clear History (or Escape)
+
+Expected behavior:
+- Dismiss the confirmation. No state change — History is untouched.
+```
+
 ------------------------------------------------------------------------
 
 ## 9. Events
@@ -315,6 +417,8 @@ Expected behavior:
   interruption.
 - **SessionSaved** `{ sessionRecord }` — a session (Completed or
   Cancelled) was persisted to History.
+- **HistoryCleared** `{ scope, sessionsRemoved }` — a clear action
+  completed. `scope` is `.allTime` or `.olderThan(days: Int)`.
 
 ------------------------------------------------------------------------
 
@@ -329,7 +433,7 @@ wording only.
 - Intro line: `Practice pacing a system design interview, solo, against a realistic clock.`
 - Primary button: `Start Session`
 - Secondary link: `Session History`
-- One-time interruption notice: `Your last session ended unexpectedly and was saved as Cancelled.` — dismissible, with a `View` link to that session's Detail.
+- One-time interruption notice: `Your last session ended unexpectedly and was saved as Cancelled.` — dismissible, with a `View` link to that session's Detail. If a Clear History action removes that session, the notice keeps its text but drops the `View` link.
 - Template preview: `TEMPLATE · 6 BLOCKS · 45M` eyebrow, followed by all six blocks with their durations (Requirements 5m, Core Entities 5m, API / System Interface 5m, Data Flow 5m, High-Level Design 15m, Deep Dives 10m). Informational only — it does not let the candidate jump into or reorder a block; `Start Session` always begins at Requirements.
 
 **Shared: block progress bar**
@@ -388,6 +492,19 @@ wording only.
 - Title: `Session History`
 - Row: `{date} · {Completed/Cancelled} · {elapsed} ({+/-delta})` — delta is shown on every row regardless of status; it is never omitted for a Cancelled session. Status is shown as a badge, same as Session Detail below.
 - Empty state: `No sessions yet. Start your first practice session from Home.` with a `Start Session` button.
+- `Clear History` control — header row, grouped with `Done` at the trailing edge; hidden when the list is empty. Opens a menu rather than acting immediately, so it needs no spatial separation from `Done`.
+- Clear History menu items, each with the count of sessions that scope would remove, right-aligned: `Older than 30 days`, `Older than 90 days`, `All Time` — omitting any day-range item with zero matching sessions.
+
+**Clear History confirmation**
+- Title: `Clear {N} session{s}?`
+- Body — All Time: `This permanently deletes your entire session history — {N} sessions. This can't be undone.`
+- Body — day range: `This permanently deletes {N} sessions older than {days} days. Sessions from the last {days} days are kept. This can't be undone.`
+- Default-focused button: `Keep History`
+- Destructive button: `Clear History`
+- Hint: `esc keeps your history`
+
+**Clear History failure notice** (inline, on Session History, same pattern as Summary's save-failure notice)
+- `Couldn't clear history.` with a `Retry` button.
 
 **Session Detail**
 - Title: `{date}, {time}`
@@ -404,9 +521,10 @@ wording only.
 
 ## 11. Accessibility Behavior
 
-- Start, Next, Skip, Cancel, the confirmation dialog's buttons, and
-  every History row are reachable and operable by keyboard, with a
-  visible focus state at all times.
+- Start, Next, Skip, Cancel, the confirmation dialog's buttons, the
+  `Clear History` control and its menu items, and every History row
+  are reachable and operable by keyboard, with a visible focus state
+  at all times.
 - `BlockTimeElapsed` is announced to assistive technology via a
   polite live region (e.g. "Requirements — time's up") at the moment
   it fires, so the nudge doesn't depend on seeing the highlight or
@@ -422,6 +540,9 @@ wording only.
 - The Cancel confirmation traps focus while open, returns focus to
   the control that opened it on dismissal, and treats Escape the same
   as choosing "Keep going."
+- The Clear History confirmation follows the identical contract: it
+  traps focus while open, returns focus to the `Clear History` control
+  on dismissal, and treats Escape the same as choosing `Keep History`.
 
 ------------------------------------------------------------------------
 
@@ -463,6 +584,14 @@ wording only.
   runs well past the 45m target, are not special-cased — the same
   Cancel and Complete behaviors apply regardless of how little or how
   much time has elapsed.
+- A failed Clear History (I/O error) leaves History exactly as it
+  was — never a partial delete — and surfaces the retriable
+  `Couldn't clear history.` / `Retry` notice rather than silently
+  failing or silently succeeding in the UI.
+- Clearing History down to zero sessions is not an error state; it
+  shows the existing empty state, unchanged.
+- The count for a chosen scope is recomputed at confirm time, not
+  cached from when the Clear History menu opened.
 
 ------------------------------------------------------------------------
 
@@ -968,6 +1097,66 @@ Status: Accepted
 Stage: 99%
 ```
 
+``` text
+Decision:
+"Clear older than X days" removes sessions OLDER than X days (a
+retention/prune model) — not sessions FROM the last X days (a
+recency-wipe model, the browser-history convention).
+
+Rationale:
+The trigger is accumulation, not privacy. A candidate practicing over
+weeks/months wants to drop old test/throwaway sessions while keeping
+recent ones for pacing trend comparisons — the opposite of what a
+recency wipe would do.
+
+Status: Accepted
+Stage: 99%
+```
+
+``` text
+Decision:
+v1 ships both "Clear All" and a day-range prune option — not Clear
+All alone.
+
+Rationale:
+Clear All is a blunt instrument for an app whose stated value is
+trend data over time. A candidate who wants to drop a burst of
+accumulated/throwaway sessions but keep the meaningful history has no
+way to do that with Clear All alone.
+
+Status: Accepted
+Stage: 99%
+```
+
+``` text
+Decision:
+Day-range presets are fixed at 30 and 90 days — no free-typed number.
+
+Rationale:
+Confirmed by the candidate — reasonable defaults for how often
+practice happens; consistent with v1's "no candidate-entered form
+data" posture.
+
+Status: Accepted
+Stage: 99%
+```
+
+``` text
+Decision:
+"All Time" uses the same single-confirm pattern as the day-range
+scopes — no extra step (e.g. typing "DELETE"), even though it's the
+one scope that can erase the entire history in one action.
+
+Rationale:
+Confirmed by the candidate. Keeps the confirmation UX uniform across
+all three scopes and consistent with the existing Cancel Session
+confirmation's single-step pattern — the named count + "can't be
+undone" wording is the safeguard, not extra friction.
+
+Status: Accepted
+Stage: 99%
+```
+
 ------------------------------------------------------------------------
 
 ## 16. Open Questions
@@ -1014,6 +1203,29 @@ Not yet raised; implicitly out of scope until needed for history
 persistence design.
 ```
 
+``` text
+Deferred:
+Export or backup of History before a destructive clear (e.g. a JSON
+export prompt).
+
+Reason:
+Confirmed by the candidate — not needed at this time. Would expand
+scope beyond the accumulated-history problem Clear History solves.
+Worth reconsidering if data loss from the feature turns out to be a
+real regret in practice.
+```
+
+``` text
+Deferred:
+Undo / soft-delete (trash) window after a Clear History action.
+
+Reason:
+Adds real complexity (retention of "deleted" records, a second
+cleanup job) for a feature whose whole purpose is disk/list hygiene.
+The confirmation's explicit count + "can't be undone" wording is the
+chosen safeguard instead.
+```
+
 ------------------------------------------------------------------------
 
 ## 18. Resolution / Stage
@@ -1021,7 +1233,7 @@ persistence design.
 **Current stage:** 99% — Refinement (Design Conformance Review complete)
 
 **Since the initial 99% draft:** the high-fidelity designs
-(`docs/artifacts/designs`) were checked against this Blueprint. Eight
+(`docs/designs`) were checked against this Blueprint. Eight
 gaps surfaced; all eight are now resolved and recorded as decisions
 above — most confirmed the design's choices and corrected the
 Blueprint's copy/rules to match, one (delta shown for Cancelled
@@ -1036,3 +1248,14 @@ delta added next to their totals to match the decision above.
 request until this refinement pass closed out), then the Blueprint is
 ready for implementation, with Conformance Review checking the built
 app against the Behavioral Contracts in §8.
+
+**Since then — Clear Session History folded in:** the accepted diff
+`docs/blueprint-diffs/clear-session-history.md` has been merged into
+this Blueprint — new capability (§3), journeys (§5), rules (§7),
+behavioral contracts (§8), the `HistoryCleared` event (§9), copy
+(§10), accessibility (§11), error handling (§13), decisions (§15),
+and deferred items (§17). The feature is implemented on branch
+`feat/clear-session-history`, with the build itself recorded in
+`docs/architecture.md` (Phase 7). The diff's own journey view has
+since been merged into the single current map at
+`docs/views/user-journey map.html`.

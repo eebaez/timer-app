@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import os
 import SwiftUI
 import TimerCore
 
@@ -17,6 +18,15 @@ final class AppModel {
     /// Blueprint §8/§13: `SessionSaved` failing never blocks or hides
     /// the Summary screen — it surfaces this instead.
     private(set) var saveFailed = false
+    /// Blueprint §13: a failed Clear History leaves History exactly as
+    /// it was and surfaces this retriable inline notice on Session
+    /// History — never a partial delete, never a silent failure.
+    private(set) var clearFailed = false
+    /// The saved session behind Home's one-time interruption notice
+    /// (Blueprint §10). Nil once there's no live notice or its linked
+    /// session has been cleared — the notice then drops its `View`
+    /// link (Blueprint §13).
+    private(set) var interruptionNoticeSessionID: UUID?
 
     private let store: SessionStore
     private var ticker: Timer?
@@ -24,8 +34,11 @@ final class AppModel {
     private var blockStartDate: Date?
     private var lastActionAt = Date.distantPast
     private var pendingSave: Session?
+    private var pendingClearScope: HistoryClearScope?
     private weak var hostWindow: NSWindow?
     private var documentFrame: NSRect?
+
+    private static let log = Logger(subsystem: "com.eebaez.interviewtimer", category: "history")
 
     init(store: SessionStore) {
         self.store = store
@@ -114,6 +127,59 @@ final class AppModel {
 
     func dismissInterruptionNotice() {
         showInterruptionNotice = false
+        interruptionNoticeSessionID = nil
+    }
+
+    // MARK: - Clear Session History (Blueprint §8)
+
+    /// Confirmed Clear History for `scope`. Debounced like Next / Skip /
+    /// Cancel (Blueprint §7) so a rapid double-tap on the destructive
+    /// confirm button registers once.
+    func clearHistory(_ scope: HistoryClearScope) {
+        guard debounceOK() else { return }
+        performClear(scope)
+    }
+
+    /// Drop a stale clear-failure notice — called when Session History
+    /// is (re)opened, so a failure from a previous visit doesn't greet
+    /// the candidate on return.
+    func acknowledgeClearFailure() {
+        clearFailed = false
+        pendingClearScope = nil
+    }
+
+    /// Retry after a failed clear — replays the scope that failed.
+    /// Not debounced, matching `retrySave`: it's a single recovery
+    /// button, and it self-limits — a successful retry clears
+    /// `pendingClearScope`, so a second tap is a no-op.
+    func retryClear() {
+        guard let scope = pendingClearScope else { return }
+        performClear(scope)
+    }
+
+    private func performClear(_ scope: HistoryClearScope) {
+        do {
+            let removed = try store.clearHistory(scope, asOf: Date())
+            clearFailed = false
+            pendingClearScope = nil
+            handle([.historyCleared(scope: scope, sessionsRemoved: removed)])
+            dropInterruptionLinkIfCleared()
+        } catch {
+            // Blueprint §13: History is untouched (the store's write is
+            // all-or-nothing) — surface the retriable notice, keep the
+            // scope for Retry.
+            clearFailed = true
+            pendingClearScope = scope
+        }
+    }
+
+    /// Blueprint §6/§13: if the interruption notice's linked session was
+    /// just removed by a clear, keep the notice text but drop its now
+    /// dead `View` link.
+    private func dropInterruptionLinkIfCleared() {
+        guard let id = interruptionNoticeSessionID else { return }
+        let stillPresent = loadHistory().contains { $0.id == id }
+        if !stillPresent { interruptionNoticeSessionID = nil }
     }
 
     func resolveHostWindow(_ window: NSWindow) {
@@ -165,6 +231,7 @@ final class AppModel {
         guard let abandoned = try? store.loadAbandonedInProgressSession() else { return }
         let (next, events) = SessionEngine.reduce(abandoned, .interruptionDetected)
         handle(events)
+        interruptionNoticeSessionID = abandoned.id
         showInterruptionNotice = true
         _ = next // already carried inside the sessionSaved event; nothing further to do here
     }
@@ -179,6 +246,8 @@ final class AppModel {
                 AccessibilityNotification.Announcement("\(block) — time's up").post()
             case .sessionSaved(let saved):
                 persist(saved)
+            case .historyCleared(let scope, let removed):
+                Self.log.info("History cleared: \(String(describing: scope), privacy: .public), removed \(removed, privacy: .public)")
             case .sessionStarted, .blockActivated, .blockAdvanced, .blockSkipped,
                  .sessionCompleted, .sessionCancelled:
                 break

@@ -35,6 +35,24 @@ public final class JSONFileSessionStore: SessionStore, @unchecked Sendable {
         return try readHistory()
     }
 
+    @discardableResult
+    public func clearHistory(_ scope: HistoryClearScope, asOf now: Date) throws -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let history = try readHistory()
+        let toRemove = Set(history.matching(scope, asOf: now).map(\.id))
+        guard !toRemove.isEmpty else { return 0 } // nothing matched — not an error
+
+        let remaining = history.filter { !toRemove.contains($0.id) }
+        // Atomic write: if this throws, sessions.json is left intact and
+        // this method has mutated nothing — the "never a partial delete"
+        // guarantee. Only sessions.json is touched; the in-progress
+        // marker file is never opened here.
+        try write(remaining, to: historyURL)
+        return toRemove.count
+    }
+
     public func markInProgress(_ session: Session) throws {
         lock.lock()
         defer { lock.unlock() }

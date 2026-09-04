@@ -7,6 +7,25 @@ and this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-04
+
+### Added
+
+- Clear Session History: prune the session list from Session
+  History — older than 30 days, older than 90 days, or clear
+  everything — each scope showing a live count of what it would
+  remove before you confirm. Confirmation defaults to keeping your
+  history, and `esc` does the same; a failed clear leaves History
+  exactly as it was and offers Retry.
+- `Tests/TimerMacTests` — new test target covering `AppModel`'s Clear
+  History flow. 51 tests passing total (was 29).
+
+### Changed
+
+- Renamed `docs/technical-plan.md` to `docs/architecture.md` — it had
+  become a living architecture reference and build history rather
+  than a one-time upfront plan, so the name now matches what it is.
+
 ## [1.0.0] - 2026-08-28
 
 First release. A native macOS timer for practicing system design
@@ -30,10 +49,11 @@ interviews solo.
 - Packaging: `scripts/package-app.sh` builds and ad-hoc signs a
   distributable `.app`.
 - `docs/application-blueprint.md` (behavior spec) and
-  `docs/technical-plan.md` (architecture, build history, and a
+  `docs/architecture.md` (architecture, build history, and a
   Blueprint Conformance Review) — the project's source-of-truth
   documentation, not duplicated in the README.
 - CI via GitHub Actions, running the test suite on every push and PR.
 
-[Unreleased]: https://github.com/eebaez/timer-app/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/eebaez/timer-app/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/eebaez/timer-app/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/eebaez/timer-app/releases/tag/v1.0.0

@@ -13,6 +13,18 @@ public protocol SessionStore: Sendable {
     /// (Session History row order).
     func loadHistory() throws -> [Session]
 
+    /// Permanently removes every saved History record matching `scope`
+    /// (Blueprint §8 "Confirm Clear History"), returning the number
+    /// removed.
+    ///
+    /// All-or-nothing: on any failure, History is left exactly as it
+    /// was — never a partial delete. Never touches the in-progress
+    /// marker or any live session. `now` is passed in rather than read
+    /// from the wall clock so day-range scopes are testable without
+    /// waiting.
+    @discardableResult
+    func clearHistory(_ scope: HistoryClearScope, asOf now: Date) throws -> Int
+
     /// Records that a session is now In Progress, so it can be
     /// recovered as abandoned if the app never reaches Completed or
     /// Cancelled for it. Overwrites any prior marker.
