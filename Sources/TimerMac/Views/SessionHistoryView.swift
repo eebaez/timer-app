@@ -22,6 +22,17 @@ struct SessionHistoryView: View {
     @State private var selected: Session?
     /// Non-nil while the Clear History confirmation is showing.
     @State private var pendingScope: HistoryClearScope?
+    /// Captured once, when `pendingScope` is set — reused for both the
+    /// confirmation's displayed count and the actual delete, so the two
+    /// can't drift apart if the dialog is left open across a day
+    /// boundary (Blueprint §13: the count is "recomputed at confirm
+    /// time," not re-sampled a second time between showing it and
+    /// acting on it).
+    @State private var pendingScopeAsOf: Date = Date()
+    /// Cached alongside `sessions` (`updateClearCounts()`) rather than
+    /// recomputed on every body evaluation of `clearHistoryMenu`.
+    @State private var count30 = 0
+    @State private var count90 = 0
 
     var body: some View {
         Group {
@@ -41,10 +52,21 @@ struct SessionHistoryView: View {
         // screen now sizes to its own content, same as the main
         // window already does between Home/Active Session/Summary.
         .onAppear {
-            sessions = model.loadHistory()
+            reloadSessions()
             model.acknowledgeClearFailure() // don't greet a return visit with a stale failure
         }
         .themedSurface()
+    }
+
+    private func reloadSessions() {
+        sessions = model.loadHistory()
+        updateClearCounts()
+    }
+
+    private func updateClearCounts() {
+        let now = Date()
+        count30 = sessions.matching(.olderThan(days: 30), asOf: now).count
+        count90 = sessions.matching(.olderThan(days: 90), asOf: now).count
     }
 
     private var listView: some View {
@@ -88,14 +110,14 @@ struct SessionHistoryView: View {
         .sheet(item: $pendingScope) { scope in
             ClearHistoryConfirmationView(
                 scope: scope,
-                // Recomputed here, at confirm-open — not cached from when
-                // the menu opened (Blueprint §13).
-                count: sessions.matching(scope, asOf: Date()).count,
+                // Same instant captured when the scope was chosen, not
+                // re-sampled here — see `pendingScopeAsOf` (Blueprint §13).
+                count: sessions.matching(scope, asOf: pendingScopeAsOf).count,
                 onKeep: { pendingScope = nil },
                 onClear: {
-                    model.clearHistory(scope)
+                    model.clearHistory(scope, asOf: pendingScopeAsOf)
                     pendingScope = nil
-                    sessions = model.loadHistory() // reflect the delete; empty => emptyState, menu hides
+                    reloadSessions() // reflect the delete; empty => emptyState, menu hides
                 }
             )
         }
@@ -105,10 +127,7 @@ struct SessionHistoryView: View {
     /// when the list is empty. Opens a menu rather than acting
     /// immediately, so it needs no spatial separation from `Done`.
     private var clearHistoryMenu: some View {
-        let now = Date()
-        let count30 = sessions.matching(.olderThan(days: 30), asOf: now).count
-        let count90 = sessions.matching(.olderThan(days: 90), asOf: now).count
-        return Menu {
+        Menu {
             // A day-range scope matching zero sessions is omitted, not
             // shown disabled — never offer a confirmed no-op (Diff §7).
             if count30 > 0 {
@@ -130,11 +149,14 @@ struct SessionHistoryView: View {
     }
 
     private func scopeButton(_ title: String, scope: HistoryClearScope, count: Int) -> some View {
-        Button { pendingScope = scope } label: {
+        Button {
+            pendingScopeAsOf = Date()
+            pendingScope = scope
+        } label: {
             Text(title)
         }
         .badge(count)
-        .accessibilityLabel("\(title), \(count) \(count == 1 ? "session" : "sessions")")
+        .accessibilityLabel("\(title), \(count) \(clearHistorySessionNoun(count))")
     }
 
     /// Blueprint §13: a failed clear leaves History exactly as it was
@@ -147,7 +169,7 @@ struct SessionHistoryView: View {
             Spacer()
             Button("Retry") {
                 model.retryClear()
-                sessions = model.loadHistory()
+                reloadSessions()
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)

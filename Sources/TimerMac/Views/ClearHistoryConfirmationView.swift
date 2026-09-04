@@ -1,6 +1,13 @@
 import SwiftUI
 import TimerCore
 
+/// "1 session" / "5 sessions" — the shared plural rule for Clear
+/// History copy, used here and by `SessionHistoryView`'s menu so the
+/// two don't drift independently.
+func clearHistorySessionNoun(_ count: Int) -> String {
+    count == 1 ? "session" : "sessions"
+}
+
 /// Blueprint §10 "Clear History confirmation". Same defensive pattern
 /// as `CancelConfirmationView`: `Keep History` is the default-focused,
 /// non-destructive choice; Escape does the same thing as choosing it
@@ -16,7 +23,7 @@ struct ClearHistoryConfirmationView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Clear \(count) \(sessionNoun)?")
+            Text("Clear \(count) \(clearHistorySessionNoun(count))?")
                 .font(.title3.bold())
 
             Text(bodyText)
@@ -45,14 +52,12 @@ struct ClearHistoryConfirmationView: View {
         .onExitCommand { onKeep() }
     }
 
-    private var sessionNoun: String { count == 1 ? "session" : "sessions" }
-
     private var bodyText: String {
         switch scope {
         case .allTime:
-            return "This permanently deletes your entire session history — \(count) \(sessionNoun). This can't be undone."
+            return "This permanently deletes your entire session history — \(count) \(clearHistorySessionNoun(count)). This can't be undone."
         case .olderThan(let days):
-            return "This permanently deletes \(count) \(sessionNoun) older than \(days) days. Sessions from the last \(days) days are kept. This can't be undone."
+            return "This permanently deletes \(count) \(clearHistorySessionNoun(count)) older than \(days) days. Sessions from the last \(days) days are kept. This can't be undone."
         }
     }
 }
