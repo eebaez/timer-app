@@ -1,11 +1,27 @@
-# Technical Plan: Interview Timer (macOS v1 / iOS v2+)
+# Architecture: Interview Timer (macOS v1 / iOS v2+)
 
-**Status:** v1 shipped — all 6 phases complete, 29 passing tests, packaged as a real .app, 9/9 Blueprint contracts conform (see §12)\
-**Source of truth for behavior:** `application-blueprint.md` (rev. 12)\
+**Status:** Living reference, kept current — not a one-time upfront
+plan (this document was called `technical-plan.md` until it became
+clear that's not what it had turned into; renamed to `architecture.md`
+to match what it actually is). v1 shipped (all 6 original phases),
+Clear Session History (Phase 7) landed after ship — 51 passing tests,
+packaged as a real .app, 12/12 Blueprint contracts conform (see §12)\
+**Source of truth for behavior:** `application-blueprint.md` (rev. 14)\
 **Scope of this document:** How we build it — architecture, data
-model, testing, and a phased build order. This document does not
-redefine behavior; where it needs to reference behavior, it cites the
-Blueprint section rather than restating it.
+model, testing strategy, and the history of how we got here. This
+document does not redefine behavior; where it needs to reference
+behavior, it cites the Blueprint section rather than restating it.
+
+**What kind of document this is:** updated in place as architecture
+decisions are made or revised, not written once and left alone. Two
+documents are authoritative here, for two different questions, and
+both are meant to be consulted *before* starting new work, not just
+read afterward as a record: `application-blueprint.md` answers
+**what** the app does and **why** (behavior, journeys, rules); this
+document answers **how** it's built (architecture, data model,
+persistence, testing approach) and, in §10, keeps a chronological log
+of how that "how" actually came to be. See §11 for the concrete
+workflow a new feature follows across both documents.
 
 ------------------------------------------------------------------------
 
@@ -42,19 +58,28 @@ app targets (the second not built until v2):
 InterviewTimer/
 ├── Package.swift
 ├── Sources/
-│   └── TimerCore/            # pure Swift, no UI, no platform APIs
-│       ├── Models/           # Session, Block, enums
-│       ├── Engine/           # state machine, timer ticking
-│       ├── Persistence/      # SessionStore protocol + JSON impl
-│       └── Events.swift
+│   ├── TimerCore/            # pure Swift, no UI, no platform APIs
+│   │   ├── Models/           # Session, Block, enums
+│   │   ├── Engine/           # state machine, timer ticking
+│   │   ├── Persistence/      # SessionStore protocol + JSON impl + HistoryClearScope
+│   │   └── Events.swift
+│   └── TimerMac/             # SwiftUI macOS app target (v1) — executableTarget
+│       ├── Views/
+│       ├── Audio/
+│       └── TimerMacApp.swift
 ├── Tests/
-│   └── TimerCoreTests/       # one test group per Behavioral Contract
-├── TimerMac/                 # SwiftUI macOS app target (v1)
-│   ├── Views/
-│   ├── Audio/
-│   └── TimerMacApp.swift
+│   ├── TimerCoreTests/       # one test group per Behavioral Contract
+│   └── TimerMacTests/        # AppModel — added for the Clear History flow (§9, §10 Phase 7)
 └── TimerIOS/                 # SwiftUI iOS app target (v2/v3, later)
 ```
+
+**As built, not as originally sketched:** `TimerMac` stayed a single
+`executableTarget` — no library/executable split was needed to make
+it testable. `swift-tools-version: 6.2` lets a `.testTarget` declare a
+dependency directly on an `executableTarget` and `@testable import`
+it; the historical "executables aren't importable modules" constraint
+that would have forced a split doesn't apply here. Confirmed
+empirically before committing to it (§9).
 
 **Why a shared core package first:** everything in Blueprint §6–§9
 (states, rules, behavioral contracts, events) has zero platform
@@ -137,6 +162,17 @@ discrete, enumerable contracts, the engine has no ambiguity to resolve
 — it's a direct transcription. **Conformance Review against §8 is
 just "does every contract have a passing test."**
 
+**Clear Session History (Phase 7) is the one event `reduce` never
+produces.** `Event` is now the 9-case enum from Blueprint §9 —
+`historyCleared(scope:sessionsRemoved:)` was added alongside the
+original 8 — but clearing acts on the History *collection*, not a
+`Session`'s state machine, so there's no `Action` case for it and the
+reducer's `switch` is untouched. `AppModel` constructs the event
+directly after a successful `SessionStore.clearHistory` call and
+routes it through the same `handle(_:)` side-effect sink as everything
+`reduce` emits, so "every domain event flows through one place" still
+holds even for the one event that bypasses the engine.
+
 The actual per-second `tick` dispatch — a `Timer`/`DispatchSourceTimer`
 comparing against wall-clock `Date` rather than counting ticks, so a
 dropped frame or a slow tick never causes drift — is UI-layer wiring,
@@ -168,6 +204,30 @@ on both macOS and iOS.
   perspective — the UI reads the in-memory `Session` it already has,
   not a re-read from disk, and shows a retry affordance only if the
   write actually throws.
+
+**Clearing History (Phase 7):** `SessionStore` gained one method —
+`clearHistory(_ scope: HistoryClearScope, asOf now: Date) throws -> Int`
+— where `HistoryClearScope` is `.allTime` or `.olderThan(days: Int)`.
+`JSONFileSessionStore`'s implementation is deliberately narrow: read
+`sessions.json`, filter out everything a new `[Session].matching(_:asOf:)`
+predicate (in `TimerCore`, unit-tested on its own) says the scope
+covers, and write the remainder back through the same `.atomic` file
+write `save(_:)` already used. That single fact — the write was
+already atomic — is what makes "never a partial delete" (Blueprint
+§7/§13) free: on a throw, the original file is untouched because the
+atomic write never replaced it, and `clearHistory` itself has mutated
+nothing else. The method only ever opens `sessions.json`; it never
+touches `in-progress.json`, so an in-progress session and the
+abandoned-session marker are unaffected by any scope, by construction
+rather than by a guard clause.
+
+Day-range matching (`.olderThan(days: N)`) uses `Calendar.current.date
+(byAdding: .day, value: -N, to: now)` rather than `now -
+N*86_400` seconds, so a "30 days" boundary tracks calendar days across
+a DST transition instead of drifting by an hour. `now` is passed in
+explicitly (same posture as the engine never reading the wall clock
+internally) so the boundary — a session exactly N days old is *kept*,
+per Blueprint §10 — is deterministically testable.
 
 **Not in scope for v1, flagged for v2/v3:** if the iPhone companion is
 meant to see the *same* History as the Mac (not just run its own local
@@ -202,6 +262,8 @@ Mapping Blueprint §11 to concrete SwiftUI/AppKit mechanisms:
 | Full keyboard operability | Every button is a real `Button`/`.keyboardShortcut`, not a tap-only custom view; `Space` → Next, `Escape` → decline (Blueprint §12) |
 | Focus never force-moved on block change | No `@FocusState` mutation on block transitions — only on dialog open/close |
 | Cancel confirmation traps focus, returns it on dismiss | Native SwiftUI `.sheet`/`.alert` presentation — this is free from AppKit/SwiftUI's built-in modal focus handling, not something to hand-build |
+| Clear History confirmation traps focus, returns it, Escape = `Keep History` (Phase 7) | Same `.sheet` + `.keyboardShortcut(.defaultAction)` + `.onExitCommand` mechanism as the Cancel confirmation — `ClearHistoryConfirmationView` reuses the pattern rather than re-deriving it |
+| Clear History menu + counts are keyboard-operable and legible (Phase 7) | Native SwiftUI `Menu`/`Button`, each item's count carried by `.badge(_:)` (the system's own trailing-count affordance) rather than a custom `HStack`, plus a combined `.accessibilityLabel` per item so the count isn't read as a loose fragment |
 
 This table is the accessibility checklist for QA before v1 ships —
 each row should be independently verifiable with VoiceOver on.
@@ -225,12 +287,26 @@ forward-looking, not urgent:
 
 ## 9. Testing strategy
 
-- **`TimerCoreTests`**: one test group per Behavioral Contract (§8) —
-  8 contracts, each with its happy path plus the edge cases the
-  Blueprint already calls out explicitly (double-tap debounce, Skip
-  only valid on Data Flow, Cancel decline leaves state unchanged,
-  interruption detection only at launch). This is the bulk of
+- **`TimerCoreTests`**: one test group per Behavioral Contract
+  implemented in the engine or the store (§8), each with its happy
+  path plus the edge cases the Blueprint already calls out explicitly
+  (double-tap debounce, Skip only valid on Data Flow, Cancel decline
+  leaves state unchanged, interruption detection only at launch).
+  Phase 7 added two groups here — `HistoryClearScopeTests` (the
+  day-range/all-time predicate, including the boundary case: a session
+  exactly N days old is kept, not removed) and `JSONFileSessionStoreTests`'s
+  clear-history cases (incl. the in-progress marker staying untouched
+  and a best-effort atomicity check). This remains the bulk of
   automated coverage and needs no UI, simulator, or device.
+- **`TimerMacTests` (added Phase 7)**: `AppModel`'s Clear History flow
+  — success/failure/retry, the debounce on the destructive confirm,
+  and the interruption-notice `View`-link drop — against an in-memory
+  `FakeSessionStore`. `AppModel` lives in the `TimerMac` executable
+  target; `@testable import TimerMac` from a `.testTarget` works
+  directly (§2), so this needed no architectural change to add, only a
+  new test target in `Package.swift`. View Session History and Review
+  Session Detail (both pure reads over `SessionStore`) remain
+  manual-only, same as before Phase 7.
 - **Manual QA pass against `application-blueprint.md` §10 (Copy)**:
   every string in the shipped UI should trace to a line in that
   section — this is effectively a lightweight Conformance Review,
@@ -243,7 +319,14 @@ forward-looking, not urgent:
 
 ------------------------------------------------------------------------
 
-## 10. Phased build order
+## 10. Build History
+
+A chronological, append-only log — every phase below is retrospective
+(the original v1 phases plus each feature landed since, like Phase 7).
+New work adds a new phase entry here; existing entries aren't rewritten
+except to fix an error. If this log ever grows past the point of being
+skimmable, split it into its own file and leave this section as a
+short index — not needed yet at 7 phases.
 
 ``` text
 Phase 0 — Scaffolding ✅ Done
@@ -439,11 +522,62 @@ Phase 6 — Package & ship v1 ✅ Done
   Generated with a one-off Pillow script (no SVG renderer was
   available) rather than hand-tuning a bitmap; the generator itself
   wasn't kept — `AppIcon-1024.png` is the tracked source asset now,
-  the same way `docs/artifacts/designs` holds the Product Designer's
+  the same way `docs/designs` holds the Product Designer's
   mockups as final exports, not the tool that made them. Compiled to
   `.icns` via `scripts/build-icns.sh` (macOS's built-in sips/iconutil,
   kept since it's generic PNG→icns packaging, not design generation),
   and wired into `package-app.sh` automatically.
+
+Phase 7 — Clear Session History ✅ Done
+  Built from an accepted Blueprint diff
+  (`docs/blueprint-diffs/clear-session-history.md`), planned in a
+  `docs/implementation-plans/clear-session-history.md` that's since
+  been folded in here and removed, per §11's workflow — the plan did
+  its job and isn't kept around as a stale stub. Behavior folded
+  into `application-blueprint.md` (rev. 14) once shipped. Adds one
+  `SessionStore` method (`clearHistory`, §5), one `Event` case
+  (`historyCleared`, §4), a `Clear History` menu + confirmation on
+  Session History, and a retriable inline failure notice mirroring
+  Summary's save-failure pattern. No new screens, no `Session`/`Block`
+  state-machine changes — clearing acts on the History collection, not
+  a session's own lifecycle.
+
+  Plan vs. built — one real deviation: the plan assumed `AppModel`
+  would need a `TimerMac` library/executable split to become
+  unit-testable (executables historically aren't `@testable`-importable
+  modules). Tried the direct route first instead of building the split
+  up front: `.testTarget(dependencies: ["TimerMac"])` +
+  `@testable import TimerMac` against the existing `executableTarget`
+  just worked under `swift-tools-version: 6.2`. Zero churn to
+  `Package.swift` beyond the one new test target, `swift run TimerMac`
+  and `package-app.sh` untouched — see §2's note. Worth remembering as
+  a general lesson: check whether a constraint is still current before
+  building around it.
+
+  A few smaller decisions resolved during the build, not just planned
+  up front: `retryClear()` (the failure notice's Retry button) is
+  *not* debounced, matching the existing `retrySave()` precedent — only
+  the destructive confirm itself is; a new `AppModel.acknowledgeClearFailure()`
+  drops a stale failure notice when Session History is reopened, so a
+  prior visit's failure doesn't greet the candidate on return; menu
+  item counts use SwiftUI's native `.badge(_:)` rather than a
+  hand-built row layout.
+
+  Guided visual QA (screenshots relayed by the user, same as Phase 5):
+  confirmed the menu, both confirmation copies (day-range and All
+  Time), and `esc` all behave as designed. One real fix landed: the
+  empty-state `Start Session` button (reachable after clearing all
+  history) was still on the system's default blue
+  `.borderedProminent` style from before this feature existed —
+  switched to `primaryPillStyle()` to match Done/Keep History/Home's
+  own Start Session, the same ink-pill treatment §Phase 5 unified
+  everything else onto.
+
+  Test count: 51 passing (was 29) — 7 for the day-range/all-time
+  predicate, 6 extending `JSONFileSessionStoreTests` (including a
+  best-effort atomicity check: make the store's directory read-only
+  mid-clear and confirm History comes back byte-for-byte unchanged),
+  9 new in `TimerMacTests` for the `AppModel` flow.
 ```
 
 Each phase produces something runnable — nothing is a "big bang"
@@ -461,15 +595,41 @@ need a behavior change (not just an implementation choice), that
 change belongs in `application-blueprint.md` first, with this document
 updated to follow it — not the other way around.
 
+**How a new feature moves through both documents** — the pattern
+Clear Session History (Phase 7) established and this document now
+follows going forward:
+
+1. **Behavior** is proposed and settled as a `docs/blueprint-diffs/<feature>.md`,
+   then folded into `application-blueprint.md` once accepted. That
+   fold-in is what makes the Blueprint authoritative — the diff file
+   stays afterward only as the change record.
+2. **Implementation** is planned as a `docs/implementation-plans/<feature>.md`
+   against the now-current Blueprint. That plan is disposable by
+   design: once the feature ships, whatever in it is still true gets
+   folded into the relevant §1–§9/§11 section here (architecture,
+   updated in place) and a new entry in §10's Build History (what
+   actually happened, including any plan-vs-built deviations). The
+   plan file itself is then deleted, not kept around as a stale
+   stub — git history is the record of it, this document (once the
+   fold-in is done) and the Build History are the living ones.
+3. **This document** is what the *next* feature's implementation plan
+   should read first for architecture and approach, the same way it
+   reads `application-blueprint.md` first for behavior. A technical
+   decision that isn't reflected here yet is, by definition, not
+   finished being folded in.
+
 ------------------------------------------------------------------------
 
-## 12. Blueprint Conformance Review (v1)
+## 12. Blueprint Conformance Review
 
-Per the Blueprint spec's own definition (§11 of
-`application-blueprint.md`): does the built app match the agreed
-behavioral contract? All 9 of Blueprint §8's Behavioral Contracts,
-checked against automated test coverage plus real manual use across
-this whole build (not just at the moment of packaging):
+A living checklist, re-run and extended every time a Behavioral
+Contract is added — not a one-time v1 snapshot. Per the Blueprint
+spec's own definition (§11 of `application-blueprint.md`): does the
+built app match the agreed behavioral contract? All 12 of Blueprint
+§8's Behavioral Contracts as of rev. 14 — the original 9 plus the 3
+Phase 7 added — checked against automated test coverage plus real
+manual use across this whole build (not just at the moment of
+packaging):
 
 | Contract | Automated coverage | Manual verification |
 |---|---|---|
@@ -482,10 +642,13 @@ this whole build (not just at the moment of packaging):
 | Interruption Detected | `interruptionDetectedBehavesLikeConfirmedCancelButMarkedInterrupted`, `inProgressMarkerIsRecoverableAsAbandoned`, `savingClearsTheInProgressMarker` | Reproduced with a crafted abandoned session; correctly auto-cancelled and surfaced on Home |
 | View Session History | *(pure read — no engine test)* | List, empty state, most-recent-first order, delta coloring by sign |
 | Review Session Detail | *(pure read — no engine test)* | History → row → Detail; Done pops to list, List's own Done closes the sheet |
+| Open Clear History Menu *(Phase 7)* | `HistoryClearScopeTests` (7 tests: all-time, day-range boundary, subset relationship, ordering, empty-match) | Menu hidden when History is empty; zero-match day-range omitted; divider only when a day-range item is present; live counts |
+| Confirm Clear History *(Phase 7)* | `JSONFileSessionStoreTests` clear-history cases (6 tests, incl. the in-progress marker untouched and the best-effort atomicity check) + `AppModelClearHistoryTests` (9 tests: success, failure/retry, debounce, interruption-link drop) | Both confirmation copies (day-range, All Time), `Keep History` default focus, `esc`, the empty state after a full clear |
+| Decline Clear History *(Phase 7)* | Covered by `AppModelClearHistoryTests`' unchanged-history assertions | `Keep History` and `esc` both leave History untouched |
 
-**Result: 9/9 contracts conform.** 29 automated tests all passing.
+**Result: 12/12 contracts conform.** 51 automated tests all passing.
 No open discrepancies between built behavior and the Blueprint as of
-rev. 13.
+rev. 14.
 
 Outside §8, worth naming explicitly since they came from real use
 rather than the original plan: the exact color palette (§Theme.swift,
@@ -495,3 +658,11 @@ windows) confirmed with the user during Phase 5, and the skip-time
 reconciliation decision logged in the Blueprint (§15) after real usage
 surfaced it. All three are reflected in both the Blueprint and this
 plan — nothing shipped that the documentation doesn't know about.
+
+Phase 7 added one more of these: the `@testable import` of an
+`executableTarget` working directly under `swift-tools-version: 6.2`
+(§2, §9) — an implementation-plan assumption (a library/executable
+split would be needed) that turned out to be stale before a line of
+that split was written. Not a Blueprint-level fact, but exactly the
+kind of "verify before building around it" finding this section exists
+to preserve.

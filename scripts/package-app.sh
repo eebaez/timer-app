@@ -1,17 +1,17 @@
 #!/bin/bash
 # Builds a real, launchable Interview Timer.app — Phase 6 of
-# docs/technical-plan.md. No Xcode project exists (this is a pure SPM
+# docs/architecture.md. No Xcode project exists (this is a pure SPM
 # package throughout), so this script assembles the .app bundle by
 # hand: Info.plist, the release binary, ad-hoc code signing. Direct
-# local distribution only, per the Technical Plan's decisions — no
+# local distribution only, per docs/architecture.md's decisions — no
 # App Store, no paid Developer Program membership required.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="Interview Timer"
 BUNDLE_ID="com.eebaez.interviewtimer"
-VERSION="1.0.0"
-BUILD_NUMBER="1"
+VERSION="1.1.0"
+BUILD_NUMBER="2"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 

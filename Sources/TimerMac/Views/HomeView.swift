@@ -107,10 +107,15 @@ struct HomeView: View {
             Text("Your last session ended unexpectedly and was saved as Cancelled.")
                 .font(.callout)
             Spacer()
-            Button("View") { showHistoryPlaceholder = true }
-                .buttonStyle(.plain)
-                .underline()
-                .foregroundStyle(Theme.accent)
+            // Blueprint §13: if a Clear History action removed the
+            // session this notice points at, keep the text but drop the
+            // now-dead link.
+            if model.interruptionNoticeSessionID != nil {
+                Button("View") { showHistoryPlaceholder = true }
+                    .buttonStyle(.plain)
+                    .underline()
+                    .foregroundStyle(Theme.accent)
+            }
             Button {
                 model.dismissInterruptionNotice()
             } label: {
