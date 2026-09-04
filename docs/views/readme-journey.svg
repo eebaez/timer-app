@@ -1,6 +1,6 @@
-<svg viewBox="0 0 1450 330" xmlns="http://www.w3.org/2000/svg" role="img"
-  aria-label="A candidate starts a practice session from Home, moves through six timed blocks — Requirements, Core Entities, API/System Interface, Data Flow, High-Level Design, and Deep Dives, 45 minutes total — then reaches Session Complete. Data Flow can be skipped, cancelling at any point still saves the session, and every session is recorded in Session History.">
-  <rect x="0" y="0" width="1450" height="330" fill="#faf9f6" />
+<svg viewBox="0 0 1450 350" xmlns="http://www.w3.org/2000/svg" role="img"
+  aria-label="A candidate starts a practice session from Home, moves through six timed blocks — Requirements, Core Entities, API/System Interface, Data Flow, High-Level Design, and Deep Dives, 45 minutes total — then reaches Session Complete. Data Flow can be skipped, cancelling at any point still saves the session, and every session is recorded in Session History, which can be pruned by date range or cleared entirely, always behind a confirmation.">
+  <rect x="0" y="0" width="1450" height="350" fill="#faf9f6" />
 
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -75,5 +75,8 @@
 
     <circle cx="44" cy="294" r="3" fill="#b8500f" />
     <text x="58" y="298">Every session, completed or cancelled, is recorded for you to review pacing over time</text>
+
+    <circle cx="44" cy="322" r="3" fill="#b8500f" />
+    <text x="58" y="326">Session History can be pruned any time — clear by 30/90-day range or clear all, always behind a confirmation</text>
   </g>
 </svg>

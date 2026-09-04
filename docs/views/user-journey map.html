@@ -48,11 +48,11 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 34px;
   }
 
   .prose {
-    max-width: 62ch;
+    max-width: 64ch;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -76,6 +76,15 @@
     letter-spacing: -0.01em;
   }
 
+  h2 {
+    margin: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+
   .prose p {
     margin: 0;
     font-size: 15px;
@@ -83,11 +92,31 @@
     color: var(--ink);
   }
 
+  .prose p code, figcaption code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+  }
+
   figure {
     margin: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+
+  .figure-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .figure-head .step {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
   }
 
   .diagram-frame {
@@ -109,8 +138,8 @@
   figcaption {
     font-size: 13px;
     color: var(--ink-soft);
-    line-height: 1.5;
-    max-width: 62ch;
+    line-height: 1.55;
+    max-width: 64ch;
   }
 
   .legend {
@@ -141,6 +170,7 @@
     color: var(--ink-soft);
     border-top: 1px solid var(--line);
     padding-top: 16px;
+    line-height: 1.6;
   }
 
   .stage-note b { color: var(--ink); font-weight: 600; }
@@ -157,17 +187,21 @@
 
 <div class="page">
   <div class="prose">
-    <div class="eyebrow">Blueprint View — User Journey Map (99% Refinement)</div>
-    <h1>How a candidate moves through a practice session</h1>
-    <p>Regenerated from the 99% Refinement Blueprint after a Design
-    Conformance Review against the high-fidelity mockups. Durations are now
-    the finalized 45-minute spec (Core Entities and High-Level Design both
-    changed), and the skip control reads "Skip block" rather than naming
-    Data Flow. This remains a projection of
-    <code>application-blueprint.md</code>, not a separate source of truth.</p>
+    <div class="eyebrow">Blueprint View — User Journey Map (Clear Session History folded in)</div>
+    <h1>How a candidate moves through — and prunes — a practice session</h1>
+    <p>Regenerated from <code>application-blueprint.md</code> after the
+    <code>clear-session-history</code> blueprint diff was folded in. The
+    session, cancel, and interruption flows are unchanged from the 99%
+    Refinement map; a second figure adds the new Clear Session History
+    journey reachable from Session History. Still a projection of the
+    Blueprint, not a separate source of truth.</p>
   </div>
 
   <figure>
+    <div class="figure-head">
+      <h2>Practice session — start to saved</h2>
+      <span class="step">Home → six blocks → Complete · with Cancel and Interruption</span>
+    </div>
     <div class="diagram-frame">
       <svg class="journey" viewBox="0 0 1550 500" role="img"
         aria-label="The candidate starts a session, moves through six timed blocks — Requirements, Core Entities, API/System Interface, Data Flow, High-Level Design, and Deep Dives — then completes the session, which is saved to history. Data Flow can be skipped in the moment, arcing past it to High-Level Design. Cancel is available from any block and opens a confirm-or-decline decision: declining resumes the session unchanged, confirming ends it as Cancelled. Separately, if the app is closed or refreshed mid-session, the interruption is detected on relaunch and auto-saved as Cancelled with a one-time notice on Home — without the candidate explicitly cancelling. A second small flow shows browsing from Home into Session History and a past Session Detail.">
@@ -299,6 +333,12 @@
         <rect x="375" y="422" width="160" height="56" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
         <text x="455" y="454" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="11" fill="var(--ink)">Session Detail</text>
 
+        <!-- new: clear-history branch stub off Session History -->
+        <line x1="235" y1="478" x2="235" y2="495" stroke="var(--accent)" stroke-width="1.5"
+          stroke-dasharray="4 4" marker-end="url(#arrowAccent)" />
+        <text x="252" y="493" font-family="IBM Plex Mono, monospace" font-size="9.5"
+          fill="var(--accent)">Clear History → see figure below</text>
+
         <!-- interruption journey (system-triggered) -->
         <text x="620" y="400" text-anchor="middle" font-family="IBM Plex Mono, monospace"
           font-size="9.5" fill="var(--ink-soft)">from any block, any time —</text>
@@ -328,13 +368,126 @@
           fill="var(--ink-soft)">shown on Home</text>
       </svg>
     </div>
-    <figcaption>The primary path runs left to right through all six blocks.
-    Data Flow can be skipped in the moment. Cancel opens a confirm/decline
-    decision — declining resumes normally, confirming ends the session as
-    Cancelled. An unintentional interruption (app closed or refreshed)
-    reaches the same Cancelled outcome automatically on relaunch, without
-    the candidate choosing to cancel. Separately, from Home a candidate can
-    browse Session History and open a past session's detail.</figcaption>
+    <figcaption>Unchanged from the 99% Refinement map except for the dashed
+    <code>Clear History</code> stub under Session History, which leads into
+    the figure below. The primary path runs left to right through all six
+    blocks; Data Flow can be skipped in the moment; Cancel opens a
+    confirm/decline decision; an unintentional interruption reaches the same
+    Cancelled outcome automatically on relaunch.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="figure-head">
+      <h2>Clear Session History</h2>
+      <span class="step">Session History → menu → scope → confirm → outcome</span>
+    </div>
+    <div class="diagram-frame">
+      <svg class="journey" viewBox="0 0 1300 470" role="img"
+        aria-label="From Session History, the candidate opens the Clear History menu, shown only when at least one session is saved. The menu lists up to three scopes — Older than 30 days, Older than 90 days, and All Time — each with a live count of the sessions it would remove; a day-range scope matching zero sessions is omitted. Choosing a scope opens one confirmation, Clear N sessions?, whose default-focused choice is the non-destructive Keep History. Keep History or Escape returns to Session History unchanged. Confirming Clear History deletes the matching sessions; on success the list returns updated, or shows the empty state if that was the last session; on failure History is left exactly as it was and a Couldn't clear history notice offers Retry, which loops back to the delete.">
+        <defs>
+          <marker id="arrow2" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L8,4 L0,8 Z" fill="currentColor" />
+          </marker>
+          <marker id="arrow2Accent" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L8,4 L0,8 Z" fill="var(--accent)" />
+          </marker>
+        </defs>
+
+        <g font-family="IBM Plex Mono, monospace">
+          <!-- 1. Session History -->
+          <rect x="20" y="96" width="150" height="60" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="95" y="122" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Session</text>
+          <text x="95" y="138" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">History</text>
+
+          <!-- gate note -->
+          <text x="95" y="176" text-anchor="middle" font-size="9" fill="var(--ink-soft)">control hidden</text>
+          <text x="95" y="187" text-anchor="middle" font-size="9" fill="var(--ink-soft)">if list empty</text>
+
+          <line x1="170" y1="126" x2="205" y2="126" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)" />
+          <text x="187" y="116" text-anchor="middle" font-size="9" fill="var(--ink-soft)">open</text>
+
+          <!-- 2. Clear History menu -->
+          <rect x="205" y="96" width="160" height="60" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="285" y="122" text-anchor="middle" font-weight="600" font-size="10.5" fill="var(--ink)">Clear History</text>
+          <text x="285" y="138" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">(menu)</text>
+
+          <line x1="365" y1="126" x2="400" y2="126" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)" />
+
+          <!-- 3. scope choices -->
+          <rect x="400" y="84" width="196" height="84" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="498" y="106" text-anchor="middle" font-weight="600" font-size="10" fill="var(--ink)">Choose a scope</text>
+          <text x="498" y="123" text-anchor="middle" font-size="9" fill="var(--ink-soft)">Older than 30 days &#183; N</text>
+          <text x="498" y="136" text-anchor="middle" font-size="9" fill="var(--ink-soft)">Older than 90 days &#183; N</text>
+          <text x="498" y="149" text-anchor="middle" font-size="9" fill="var(--ink-soft)">&#8212;&#8212;&#8212;&#8212;&#8212;</text>
+          <text x="498" y="161" text-anchor="middle" font-size="9" fill="var(--ink-soft)">All Time &#183; N</text>
+
+          <text x="498" y="192" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">a day-range scope matching 0 sessions is omitted; All Time always shown</text>
+
+          <line x1="596" y1="126" x2="632" y2="126" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)" />
+
+          <!-- 4. confirm diamond -->
+          <polygon points="726,86 820,126 726,166 632,126" fill="var(--paper-raised)" stroke="var(--accent)" stroke-width="1.5" />
+          <text x="726" y="122" text-anchor="middle" font-weight="600" font-size="9.5" fill="var(--ink)">Clear N</text>
+          <text x="726" y="135" text-anchor="middle" font-weight="600" font-size="9.5" fill="var(--ink)">sessions?</text>
+
+          <!-- 5. keep / esc -> unchanged -->
+          <path d="M681,151 C 620,188 560,196 505,196 L505,180" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)" />
+          <text x="726" y="212" text-anchor="middle" font-size="9" fill="var(--ink-soft)">Keep History / esc &#8212; default-focused, non-destructive</text>
+
+          <rect x="20" y="240" width="200" height="52" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="120" y="270" text-anchor="middle" font-weight="600" font-size="10" fill="var(--ink)">Session History &#8212; unchanged</text>
+          <path d="M420,196 C 300,196 220,214 175,240" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)" />
+
+          <!-- 6. confirm -> delete -->
+          <line x1="820" y1="126" x2="856" y2="126" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow2Accent)" />
+          <text x="838" y="116" text-anchor="middle" font-size="9" fill="var(--accent)">Clear History</text>
+
+          <rect x="856" y="96" width="160" height="60" rx="6" fill="var(--paper-raised)" stroke="var(--accent)" stroke-width="1.5" />
+          <text x="936" y="120" text-anchor="middle" font-weight="600" font-size="10" fill="var(--ink)">Delete matching</text>
+          <text x="936" y="134" text-anchor="middle" font-weight="600" font-size="10" fill="var(--ink)">sessions</text>
+
+          <line x1="1016" y1="126" x2="1050" y2="126" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow2Accent)" />
+
+          <!-- 7. delete ok? -->
+          <polygon points="1136,90 1200,126 1136,162 1072,126" fill="var(--paper-raised)" stroke="var(--accent)" stroke-width="1.5" />
+          <text x="1136" y="123" text-anchor="middle" font-weight="600" font-size="9" fill="var(--ink)">Delete</text>
+          <text x="1136" y="135" text-anchor="middle" font-weight="600" font-size="9" fill="var(--ink)">OK?</text>
+
+          <!-- 8a. No -> couldn't clear / retry -->
+          <line x1="1136" y1="90" x2="1136" y2="64" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="1.5 3" marker-end="url(#arrow2Accent)" />
+          <text x="1152" y="76" font-size="9" fill="var(--accent)">No</text>
+          <rect x="946" y="20" width="264" height="44" rx="6" fill="var(--paper-raised)" stroke="var(--accent)" stroke-width="1.5" />
+          <text x="1078" y="39" text-anchor="middle" font-weight="600" font-size="9.5" fill="var(--ink)">Couldn&#8217;t clear history &#183; Retry</text>
+          <text x="1078" y="53" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">History left exactly as it was &#8212; never partial</text>
+          <!-- retry loop back to Delete -->
+          <path d="M946,50 C 900,50 890,74 908,96" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="1.5 3" marker-end="url(#arrow2Accent)" />
+          <text x="874" y="70" text-anchor="middle" font-size="9" fill="var(--accent)">Retry</text>
+
+          <!-- 8b. Yes -> updated / empty -->
+          <line x1="1136" y1="162" x2="1136" y2="240" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow2Accent)" />
+          <text x="1152" y="200" font-size="9" fill="var(--accent)">Yes</text>
+          <rect x="1000" y="240" width="270" height="52" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1.5" />
+          <text x="1135" y="262" text-anchor="middle" font-weight="600" font-size="10" fill="var(--ink)">Session History &#8212; updated list</text>
+          <text x="1135" y="278" text-anchor="middle" font-size="9" fill="var(--ink-soft)">or empty state, if that was the last session</text>
+
+          <!-- edge case callout -->
+          <rect x="20" y="352" width="1250" height="80" rx="6" fill="var(--paper-raised)" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3" />
+          <text x="34" y="375" font-weight="600" font-size="10" fill="var(--accent)">Edge case &#8212; interruption notice</text>
+          <text x="34" y="394" font-size="9.5" fill="var(--ink-soft)">If the chosen scope removes the session behind Home&#8217;s still-showing one-time interruption notice, the notice keeps its</text>
+          <text x="34" y="408" font-size="9.5" fill="var(--ink-soft)">dismissible text but drops its now-dead <tspan font-family="IBM Plex Mono, monospace">View</tspan> link. The in-progress session and the abandoned-session marker</text>
+          <text x="34" y="422" font-size="9.5" fill="var(--ink-soft)">are a separate store and are never touched by a clear, whatever the scope. Emits <tspan font-family="IBM Plex Mono, monospace">HistoryCleared(scope, sessionsRemoved)</tspan> on success.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>One confirmation for every scope, defaulted to the
+    non-destructive <code>Keep History</code> — the same defensive pattern as
+    the Cancel confirmation, applied at higher stakes. A day-range scope
+    matching zero sessions is omitted rather than offered as a no-op. A
+    failed delete leaves History untouched and offers <code>Retry</code>
+    rather than partially clearing. Clearing to zero is not an error — it
+    shows the existing empty state.</figcaption>
   </figure>
 
   <div class="legend">
@@ -348,15 +501,15 @@
     </div>
     <div class="legend-item">
       <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowAccent)" /></svg>
-      <span>Candidate confirms Cancel</span>
+      <span>Destructive — candidate confirms a delete</span>
     </div>
     <div class="legend-item">
       <svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="24" y2="5" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="1.5 3" marker-end="url(#arrowAccent)" /></svg>
-      <span>System-triggered (interruption)</span>
+      <span>System-triggered / failure &amp; retry path</span>
     </div>
   </div>
 
   <div class="stage-note">
-    Resolution stage: <b>99% — Refinement</b> (rev. 11, post Design Conformance Review) · Source: <b>application-blueprint.md</b> · This view is a projection of the Blueprint — regenerate it rather than editing it directly if the journey changes again.
+    Resolution stage: <b>99% — Refinement</b>, with the <b>Clear Session History</b> diff folded in · Source: <b>application-blueprint.md</b> (&#167;3, &#167;5, &#167;7&#8211;&#167;11, &#167;13, &#167;15, &#167;17) + <b>docs/blueprint-diffs/clear-session-history.md</b> · This view is a projection — regenerate it rather than editing it directly if the journey changes again.
   </div>
 </div>
